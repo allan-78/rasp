@@ -1,0 +1,72 @@
+The server actually creates the table for you automatically on first run — but walking through it by hand first is worth doing anyway, since it confirms your database/user/permissions all actually work *before* you're troubleshooting through Node.js on top of that. Here's the full thing, database through querying data:
+
+**1. Log into MariaDB as root**
+```
+sudo mariadb
+```
+
+**2. Create the database**
+```sql
+CREATE DATABASE water_monitor;
+```
+
+**3. Create a dedicated user and grant it access** (don't use root in your app — bad practice, and this keeps the server's permissions scoped to just this one database)
+```sql
+CREATE USER 'allanroi'@'localhost' IDENTIFIED BY '123';
+GRANT ALL PRIVILEGES ON allanroi.* TO 'allanroi'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+**4. Switch into the database**
+```sql
+USE water_monitor;
+```
+
+**5. Create the table**
+```sql
+CREATE TABLE readings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    temp FLOAT NOT NULL,
+    peltier BOOLEAN NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+What each column is for:
+- `id` — auto-incrementing row number, just a unique identifier per reading
+- `temp` — the temperature value from the ESP32
+- `peltier` — whether it was on or off at that moment
+- `created_at` — timestamp, filled in automatically the instant each row is inserted
+
+**6. Verify it's there**
+```sql
+SHOW TABLES;
+DESCRIBE readings;
+```
+`DESCRIBE` prints the column list back out — a good sanity check that it matches the above.
+
+**7. Test it with a fake row**
+```sql
+INSERT INTO readings (temp, peltier) VALUES (25.5, true);
+SELECT * FROM readings;
+```
+You should see one row come back with an auto-filled `id` and `created_at`.
+
+**8. Clean up the test row before real data comes in** (optional, but keeps your history clean)
+```sql
+TRUNCATE TABLE readings;
+```
+
+**9. Exit**
+```sql
+EXIT;
+```
+
+Once your Node server is running and the ESP32 is actually sending readings, you can check on the real data anytime by logging in as your app user instead of root:
+```
+mariadb -u water_monitor -p water_monitor
+```
+```sql
+SELECT * FROM readings ORDER BY id DESC LIMIT 10;
+```
+
+I've added this into Part 5 of your setup guide too, so it's all in one place.
