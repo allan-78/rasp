@@ -1,9 +1,13 @@
 {
-  "name": "ph-server",
+  "name": "temp-peltier-server",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "Water temp / Peltier monitor server with MariaDB storage",
+  "main": "temp_peltier_server.js",
+  "scripts": {
+    "start": "node temp_peltier_server.js"
+  },
   "dependencies": {
-    "express": "^4.18.2",
-    "mysql2": "^3.6.0"
+    "express": "^4.19.2",
+    "mysql2": "^3.10.0"
   }
 }
