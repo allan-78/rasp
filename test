@@ -1,0 +1,79 @@
+Here's the one path, start to finish — just this, nothing else:
+
+**1. Install MariaDB**
+```
+sudo apt update
+sudo apt install mariadb-server
+```
+
+**2. Secure it** (sets a root password, recommended)
+```
+sudo mysql_secure_installation
+```
+
+**3. Create the database and a user for this server**
+```
+sudo mariadb
+```
+That drops you into a `MariaDB>` prompt. Type these one at a time:
+```sql
+CREATE DATABASE water_monitor;
+CREATE USER 'water_monitor'@'localhost' IDENTIFIED BY 'choose_a_password';
+GRANT ALL PRIVILEGES ON water_monitor.* TO 'water_monitor'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+Pick your own password in place of `choose_a_password` and remember it — you need it in step 7.
+
+**4. Install Node.js** (skip if `node -v` already shows v18 or newer)
+```
+node -v
+```
+If it's missing or too old:
+```
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+**5. Make a folder and put the two files in it**
+```
+mkdir -p /home/pi/temp-peltier-server
+```
+Copy `temp_peltier_server.js` and `package.json` into that folder (scp, USB drive, or `nano` + paste).
+
+**6. Install dependencies**
+```
+cd /home/pi/temp-peltier-server
+npm install
+```
+
+**7. Put your database password into the code**
+```
+nano temp_peltier_server.js
+```
+Find this block near the top and change `password`:
+```js
+const DB_CONFIG = {
+    host: 'localhost',
+    user: 'water_monitor',
+    password: 'choose_a_password',   // <- the password from step 3
+    database: 'water_monitor',
+};
+```
+Save with `Ctrl+O`, `Enter`, then exit with `Ctrl+X`.
+
+**8. Run it**
+```
+npm start
+```
+You should see:
+```
+Connected to MariaDB, readings table ready
+Server listening on port 3001
+```
+If you see that, it's running correctly.
+
+**9. Confirm it's reachable**
+From any other device on the same network, open a browser to `http://<pi-ip>:3001/`. You'll see the dashboard — it'll say "no data yet" until your ESP32 actually sends a reading, which is expected.
+
+That's it — nothing else to install or configure.
